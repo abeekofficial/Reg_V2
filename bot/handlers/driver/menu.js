@@ -1,21 +1,21 @@
 // handlers/driver/menu.js
-const User  = require("../../models/User.model");
+const User = require("../../models/User.model");
 const Order = require("../../models/Order.model");
 const logger = require("../../utils/logger");
 const { getRegionName } = require("../../utils/regionOptions");
-const { isDriverBusy }  = require("../../services/driverService");
+const { isDriverBusy } = require("../../services/driverService");
 const { createDriverRegionKeyboard } = require("./routeSelect");
 const { createSession } = require("../../cache/sessionCache");
 
 function getStatusText(status) {
   const map = {
-    pending:            "Kutilmoqda",
-    accepted:           "Qabul qilindi",
-    in_progress:        "Jarayonda",
-    driver_confirmed:   "Haydovchi tasdiqladi",
-    passenger_confirmed:"Yo'lovchi tasdiqladi",
-    completed:          "Yakunlandi",
-    cancelled:          "Bekor qilindi",
+    pending: "Kutilmoqda",
+    accepted: "Qabul qilindi",
+    in_progress: "Jarayonda",
+    driver_confirmed: "Haydovchi tasdiqladi",
+    passenger_confirmed: "Yo'lovchi tasdiqladi",
+    completed: "Yakunlandi",
+    cancelled: "Bekor qilindi",
   };
   return map[status] || status;
 }
@@ -110,13 +110,18 @@ function applyDriverMenu(bot) {
 
       let text = `<pre>🚗 MENING BUYURTMALARIM (${orders.length} ta):</pre>\n\n`;
       orders.forEach((order, i) => {
-        const statusEmoji = { accepted: "✅", in_progress: "🚕", driver_confirmed: "⏳" };
+        const statusEmoji = {
+          accepted: "✅",
+          in_progress: "🚕",
+          driver_confirmed: "⏳",
+        };
         const icon = order.orderType === "cargo" ? "📦" : "👥";
         text += `${i + 1}. ${statusEmoji[order.status] || "📦"} <b>${getRegionName(order.from)} → ${getRegionName(order.to)}</b>\n`;
         text += `   ${icon} `;
-        text += order.orderType === "cargo"
-          ? `Yuk: <b>${order.cargoDescription || "-"}</b>\n`
-          : `<b>${order.passengers || 1} kishi</b>\n`;
+        text +=
+          order.orderType === "cargo"
+            ? `Yuk: <b>${order.cargoDescription || "-"}</b>\n`
+            : `<b>${order.passengers || 1} kishi</b>\n`;
         text += `   Status: <b>${getStatusText(order.status)}</b>\n`;
         text += `   ID: ${order._id.toString().slice(-6)}\n\n`;
       });
@@ -152,10 +157,13 @@ function applyDriverMenu(bot) {
 
       for (const order of orders) {
         const icon = order.orderType === "cargo" ? "📦" : "👥";
-        const typeText = order.orderType === "cargo"
-          ? `Yuk: ${order.cargoDescription || "-"}`
-          : `Yo'lovchilar: ${order.passengers || 1} kishi`;
-        const passenger = await User.findOne({ telegramId: order.passengerId }).lean();
+        const typeText =
+          order.orderType === "cargo"
+            ? `Yuk: ${order.cargoDescription || "-"}`
+            : `Yo'lovchilar: ${order.passengers || 1} kishi`;
+        const passenger = await User.findOne({
+          telegramId: order.passengerId,
+        }).lean();
 
         const text =
           `<pre>🚖 YANGI BUYURTMA</pre>\n\n` +
@@ -169,10 +177,15 @@ function applyDriverMenu(bot) {
         await bot.sendMessage(chatId, text, {
           parse_mode: "HTML",
           reply_markup: {
-            inline_keyboard: [[
-              { text: "▶️ Qabul qilish", callback_data: `accept_${order._id}` },
-              { text: "❌ Rad etish",    callback_data: `reject_${order._id}` },
-            ]],
+            inline_keyboard: [
+              [
+                {
+                  text: "▶️ Qabul qilish",
+                  callback_data: `accept_${order._id}`,
+                },
+                { text: "❌ Rad etish", callback_data: `reject_${order._id}` },
+              ],
+            ],
           },
         });
       }
@@ -181,6 +194,37 @@ function applyDriverMenu(bot) {
     }
   });
 
+  // - Bosh menuga qaytish
+  bot.onText(/⬅️ Bosh menuga qaytish/, async (msg) => {
+    const chatId = msg.chat.id;
+    const user = await User.findOne({ telegramId: chatId });
+    let message = "";
+    let keyboard = "";
+
+    if (user.role === "passenger") {
+      message = `<b>🗂️ Bosh menuga qaytdingiz</b> <a href="tg://user?id=${chatId}">${user?.name}</a> 😉`;
+      keyboard = [
+        ["🚖 Buyurtma berish", "📦 Yuk/Pochta"],
+        ["👤 Profilim", "📊 Tarixim"],
+        ["📋 Bot haqida"],
+      ];
+    } else if (user.role === "driver") {
+      message = `<b>🗂️ Bosh menuga qaytdingiz</b> <a href="tg://user?id=${chatId}">${user?.name}</a> 😉`;
+      keyboard = [
+        ["🚖 Buyurtma qabul qilishni boshlash"],
+        ["📋 Buyurtmalar", "👤 Profilim"],
+        ["📊 Statistika", "⭐ Reytingim", "📋 Bot haqida"],
+      ];
+    }
+
+    bot.sendMessage(chatId, message, {
+      parse_mode: "HTML",
+      reply_markup: {
+        keyboard: keyboard,
+        resize_keyboard: true,
+      },
+    });
+  });
   // ── Profil ──────────────────────────────────────────────────────────────────
   bot.onText(/👤 Profilim/, async (msg) => {
     const chatId = msg.chat.id;
@@ -189,7 +233,7 @@ function applyDriverMenu(bot) {
       if (!user) return;
 
       const fromName = user.from ? getRegionName(user.from) : "Tanlanmagan";
-      const toName   = user.to   ? getRegionName(user.to)   : "Tanlanmagan";
+      const toName = user.to ? getRegionName(user.to) : "Tanlanmagan";
 
       const text =
         `<pre>👤 MENING PROFILIM</pre>\n\n` +
