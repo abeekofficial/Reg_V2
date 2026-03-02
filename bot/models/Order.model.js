@@ -3,16 +3,20 @@ const mongoose = require("mongoose");
 
 const orderSchema = new mongoose.Schema(
   {
-    passengerId:      { type: Number, required: true, index: true },
-    driverId:         { type: Number, default: null, index: true },
-    from:             { type: String, required: true },
-    to:               { type: String, required: true },
+    passengerId: { type: Number, required: true, index: true },
+    driverId: { type: Number, default: null, index: true },
+    from: { type: String, required: true },
+    to: { type: String, required: true },
 
-    orderType:        { type: String, enum: ["passenger", "cargo"], default: "passenger" },
-    passengers:       { type: Number, default: 1, min: 1, max: 4 },
+    orderType: {
+      type: String,
+      enum: ["passenger", "cargo"],
+      default: "passenger",
+    },
+    passengers: { type: Number, default: 1, min: 1, max: 4 },
 
     cargoDescription: { type: String, default: null },
-    cargoPhotoId:     { type: String, default: null },
+    cargoPhotoId: { type: String, default: null },
 
     status: {
       type: String,
@@ -30,18 +34,26 @@ const orderSchema = new mongoose.Schema(
     },
 
     // Vaqt belgilari
-    acceptedAt:           { type: Date },
-    startedAt:            { type: Date },
-    driverConfirmedAt:    { type: Date },
+    acceptedAt: { type: Date },
+    startedAt: { type: Date },
+    driverConfirmedAt: { type: Date },
     passengerConfirmedAt: { type: Date },
-    completedAt:          { type: Date },
-    cancelledAt:          { type: Date },
-    cancelledBy:          { type: String, enum: ["driver", "passenger", "admin"], default: null },
+    completedAt: { type: Date },
+    cancelledAt: { type: Date },
+    cancelledBy: {
+      type: String,
+      enum: ["driver", "passenger", "admin"],
+      default: null,
+    },
+
+    // Baholash bayroqlari — takroriy baholashni oldini oladi
+    driverRated: { type: Boolean, default: false },
+    passengerRated: { type: Boolean, default: false },
 
     // Guruh xabarlari (o'chirish uchun)
     groupMessages: [
       {
-        groupId:   Number,
+        groupId: Number,
         messageId: Number,
       },
     ],

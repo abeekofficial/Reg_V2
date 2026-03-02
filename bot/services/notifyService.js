@@ -37,7 +37,7 @@ async function notifyPassengerDriverFound(bot, passenger, driver, order) {
  */
 async function notifyPassengerTripStarted(bot, order) {
   const fromName = getRegionName(order.from);
-  const toName   = getRegionName(order.to);
+  const toName = getRegionName(order.to);
   try {
     await bot.sendMessage(
       order.passengerId,
@@ -53,20 +53,21 @@ async function notifyPassengerTripStarted(bot, order) {
  * Passengerga: driver bekor qildi
  */
 async function notifyPassengerCancelled(bot, order) {
-  const fromName  = getRegionName(order.from);
-  const toName    = getRegionName(order.to);
+  const fromName = getRegionName(order.from);
+  const toName = getRegionName(order.to);
   const typeEmoji = order.orderType === "cargo" ? "📦" : "👥";
-  const typeInfo  = order.orderType === "cargo"
-    ? `Yuk: ${order.cargoDescription}`
-    : `${order.passengers || 1} kishi`;
+  const typeInfo =
+    order.orderType === "cargo"
+      ? `Yuk: ${order.cargoDescription}`
+      : `${order.passengers || 1} kishi`;
 
   try {
     await bot.sendMessage(
       order.passengerId,
       `❌ <b>Haydovchi buyurtmangizni bekor qildi.</b>\n\n` +
-      `📍 ${fromName} → ${toName}\n` +
-      `${typeEmoji} ${typeInfo}\n\n` +
-      `🔄 Iltimos, qaytadan buyurtma bering.`,
+        `📍 ${fromName} → ${toName}\n` +
+        `${typeEmoji} ${typeInfo}\n\n` +
+        `🔄 Iltimos, qaytadan buyurtma bering.`,
       { parse_mode: "HTML" },
     );
   } catch (err) {
@@ -78,20 +79,21 @@ async function notifyPassengerCancelled(bot, order) {
  * Driverga: passenger bekor qildi
  */
 async function notifyDriverCancelled(bot, order) {
-  const fromName  = getRegionName(order.from);
-  const toName    = getRegionName(order.to);
+  const fromName = getRegionName(order.from);
+  const toName = getRegionName(order.to);
   const typeEmoji = order.orderType === "cargo" ? "📦" : "👥";
-  const typeInfo  = order.orderType === "cargo"
-    ? `Yuk: ${order.cargoDescription}`
-    : `${order.passengers || 1} kishi`;
+  const typeInfo =
+    order.orderType === "cargo"
+      ? `Yuk: ${order.cargoDescription}`
+      : `${order.passengers || 1} kishi`;
 
   try {
     await bot.sendMessage(
       order.driverId,
       `❌ <b>Yo'lovchi buyurtmani bekor qildi.</b>\n\n` +
-      `📍 ${fromName} → ${toName}\n` +
-      `${typeEmoji} ${typeInfo}\n\n` +
-      `🔄 Yangi buyurtma kutishingiz mumkin.`,
+        `📍 ${fromName} → ${toName}\n` +
+        `${typeEmoji} ${typeInfo}\n\n` +
+        `🔄 Yangi buyurtma kutishingiz mumkin.`,
       { parse_mode: "HTML" },
     );
   } catch (err) {
@@ -103,12 +105,13 @@ async function notifyDriverCancelled(bot, order) {
  * Passengerga: driver tasdiqlash so'radi
  */
 async function notifyPassengerConfirmRequest(bot, order) {
-  const fromName  = getRegionName(order.from);
-  const toName    = getRegionName(order.to);
+  const fromName = getRegionName(order.from);
+  const toName = getRegionName(order.to);
   const typeEmoji = order.orderType === "cargo" ? "📦" : "👥";
-  const typeInfo  = order.orderType === "cargo"
-    ? `Yuk: ${order.cargoDescription}`
-    : `${order.passengers || 1} kishi`;
+  const typeInfo =
+    order.orderType === "cargo"
+      ? `Yuk: ${order.cargoDescription}`
+      : `${order.passengers || 1} kishi`;
 
   try {
     await bot.sendMessage(
@@ -117,10 +120,15 @@ async function notifyPassengerConfirmRequest(bot, order) {
       {
         parse_mode: "HTML",
         reply_markup: {
-          inline_keyboard: [[
-            { text: "✅ Ha, yakunlandi", callback_data: `confirm_complete_btn_${order._id}` },
-            { text: "❌ Yo'q",           callback_data: `dispute_${order._id}` },
-          ]],
+          inline_keyboard: [
+            [
+              {
+                text: "✅ Ha, yakunlandi",
+                callback_data: `confirm_complete_btn_${order._id}`,
+              },
+              { text: "❌ Yo'q", callback_data: `dispute_${order._id}` },
+            ],
+          ],
         },
       },
     );
@@ -133,12 +141,13 @@ async function notifyPassengerConfirmRequest(bot, order) {
  * Driverga: passenger tasdiqlash so'radi
  */
 async function notifyDriverConfirmRequest(bot, order) {
-  const fromName  = getRegionName(order.from);
-  const toName    = getRegionName(order.to);
+  const fromName = getRegionName(order.from);
+  const toName = getRegionName(order.to);
   const typeEmoji = order.orderType === "cargo" ? "📦" : "👥";
-  const typeInfo  = order.orderType === "cargo"
-    ? `Yuk: ${order.cargoDescription}`
-    : `${order.passengers || 1} kishi`;
+  const typeInfo =
+    order.orderType === "cargo"
+      ? `Yuk: ${order.cargoDescription}`
+      : `${order.passengers || 1} kishi`;
 
   try {
     await bot.sendMessage(
@@ -147,10 +156,15 @@ async function notifyDriverConfirmRequest(bot, order) {
       {
         parse_mode: "HTML",
         reply_markup: {
-          inline_keyboard: [[
-            { text: "✅ Ha, yakunlandi", callback_data: `complete_order_${order._id}` },
-            { text: "❌ Yo'q",           callback_data: `dispute_${order._id}` },
-          ]],
+          inline_keyboard: [
+            [
+              {
+                text: "✅ Ha, yakunlandi",
+                callback_data: `complete_order_${order._id}`,
+              },
+              { text: "❌ Yo'q", callback_data: `dispute_${order._id}` },
+            ],
+          ],
         },
       },
     );
@@ -160,30 +174,65 @@ async function notifyDriverConfirmRequest(bot, order) {
 }
 
 /**
- * Ikki tomonga: safar yakunlandi
+ * Ikki tomonga: safar yakunlandi + baholash tugmalari
  */
 async function notifyTripCompleted(bot, order) {
-  const fromName  = getRegionName(order.from);
-  const toName    = getRegionName(order.to);
+  const fromName = getRegionName(order.from);
+  const toName = getRegionName(order.to);
   const typeEmoji = order.orderType === "cargo" ? "📦" : "👥";
-  const typeInfo  = order.orderType === "cargo"
-    ? `Yuk: ${order.cargoDescription}`
-    : `${order.passengers || 1} kishi`;
+  const typeInfo =
+    order.orderType === "cargo"
+      ? `Yuk: ${order.cargoDescription}`
+      : `${order.passengers || 1} kishi`;
+  const orderId = order._id.toString();
 
+  // ── Passengerga: haydovchini baholash tugmalari ───────────────────────────
   try {
     await bot.sendMessage(
       order.passengerId,
-      `✅ <b>SAFAR YAKUNLANDI!</b>\n\n📍 ${fromName} → ${toName}\n${typeEmoji} ${typeInfo}\n\n⭐ Haydovchini baholang: /rate_driver_${order._id}`,
-      { parse_mode: "HTML" },
+      `✅ <b>SAFAR YAKUNLANDI!</b>\n\n📍 ${fromName} → ${toName}\n${typeEmoji} ${typeInfo}\n\n⭐ <b>Haydovchini baholang:</b>`,
+      {
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "⭐⭐⭐⭐⭐", callback_data: `drate_${orderId}_5` },
+              { text: "⭐⭐⭐⭐", callback_data: `drate_${orderId}_4` },
+            ],
+            [
+              { text: "⭐⭐⭐", callback_data: `drate_${orderId}_3` },
+              { text: "⭐⭐", callback_data: `drate_${orderId}_2` },
+              { text: "⭐", callback_data: `drate_${orderId}_1` },
+            ],
+          ],
+        },
+      },
     );
   } catch (err) {
     logger.error("notifyTripCompleted (passenger) xato:", err.message);
   }
 
+  // ── Driverga: yo'lovchini baholash tugmalari ──────────────────────────────
   try {
     await bot.sendMessage(
       order.driverId,
-      `⭐ Yo'lovchini baholang: /rate_passenger_${order._id}`,
+      `✅ <b>SAFAR YAKUNLANDI!</b>\n\n📍 ${fromName} → ${toName}\n${typeEmoji} ${typeInfo}\n\n⭐ <b>Yo'lovchini baholang:</b>`,
+      {
+        parse_mode: "HTML",
+        reply_markup: {
+          inline_keyboard: [
+            [
+              { text: "⭐⭐⭐⭐⭐", callback_data: `prate_${orderId}_5` },
+              { text: "⭐⭐⭐⭐", callback_data: `prate_${orderId}_4` },
+            ],
+            [
+              { text: "⭐⭐⭐", callback_data: `prate_${orderId}_3` },
+              { text: "⭐⭐", callback_data: `prate_${orderId}_2` },
+              { text: "⭐", callback_data: `prate_${orderId}_1` },
+            ],
+          ],
+        },
+      },
     );
   } catch (err) {
     logger.error("notifyTripCompleted (driver) xato:", err.message);
