@@ -1,10 +1,8 @@
 // middlewares/botGuard.js
-// Har bir xabar uchun foydalanuvchi autentifikatsiyasini tekshiradi
 const User = require("../models/User.model");
 const logger = require("../utils/logger");
 const { getSession } = require("../cache/sessionCache");
 
-// Registration jarayonidagi steplar — autentifikatsiya kerak emas
 const REGISTRATION_STEPS = new Set([
   "PASSENGER_NAME",
   "PASSENGER_PHONE",
@@ -25,86 +23,72 @@ const REGISTRATION_STEPS = new Set([
   "CARGO_PHOTO",
 ]);
 
-// Public komandalar — tekshiruvsiz o'tadi
 const PUBLIC_COMMANDS = new Set(["/start", "/help"]);
-
-// Role tanlash tugmalari
 const ROLE_BUTTONS = new Set(["🚕 Haydovchi", "🧍 Yo'lovchi"]);
 
 async function ensureRegistered(msg) {
   const chatId = msg.chat.id;
   const text = msg.text || "";
 
-  // Public komandalar
   if (PUBLIC_COMMANDS.has(text.split(" ")[0])) return { ok: true };
-
-  // Role tanlash tugmalari
   if (ROLE_BUTTONS.has(text)) return { ok: true };
 
-  // Session tekshiruvi — registration stepida bo'lsa o'tadi
   const session = await getSession(chatId);
   if (session && REGISTRATION_STEPS.has(session.step)) return { ok: true };
 
-  // User DB dan tekshirish
   const user = await User.findOne({ telegramId: chatId }).lean();
-  if (user && !user.isBlocked) return { ok: true, user };
-
-  // Bloklangan user
-  if (user && user.isBlocked) {
-    return { ok: false, blocked: true };
-  }
+  if (user && user.isBlocked) return { ok: false, blocked: true };
+  if (user) return { ok: true, user };
 
   return { ok: false };
 }
 
-// Bot metodlarini wrap qilish
 function applyGuard(bot) {
-  // Message-level cache — bir xabar bir marta tekshirilsin
-  const pendingChecks = new Map();
+  // Auth natijasini cache — bir xabar uchun bir marta DB so'rovi
+  const authCache = new Map();
+
+  // ⭐ ASOSIY TUZATISH: bir xabar uchun faqat bir marta ogohlantirish
+  const warnedMessages = new Set();
 
   function getAuthResult(chatId, messageId, msg) {
     const key = `${chatId}:${messageId}`;
-    if (!pendingChecks.has(key)) {
-      pendingChecks.set(key, ensureRegistered(msg));
-      setTimeout(() => pendingChecks.delete(key), 5000);
+    if (!authCache.has(key)) {
+      authCache.set(key, ensureRegistered(msg));
+      setTimeout(() => authCache.delete(key), 5000);
     }
-    return pendingChecks.get(key);
+    return authCache.get(key);
+  }
+
+  async function guardCheck(msg, callback, match = null) {
+    if (msg.chat.type !== "private") return callback(msg, match);
+    if (msg.new_chat_members) return callback(msg, match);
+
+    const result = await getAuthResult(msg.chat.id, msg.message_id, msg);
+
+    if (!result.ok) {
+      // Bir messageId uchun faqat bir marta xabar yuborish
+      const warnKey = `${msg.chat.id}:${msg.message_id}`;
+      if (!warnedMessages.has(warnKey)) {
+        warnedMessages.add(warnKey);
+        setTimeout(() => warnedMessages.delete(warnKey), 10000);
+        await sendReRegisterPrompt(bot, msg.chat.id, result.blocked);
+      }
+      return; // callback chaqirmaymiz
+    }
+
+    return callback(msg, match);
   }
 
   const origOnText = bot.onText.bind(bot);
   const origOn = bot.on.bind(bot);
 
   bot.onText = (regexp, callback) => {
-    origOnText(regexp, async (msg, match) => {
-      // Faqat private chat da guard ishlaydi
-      if (msg.chat.type !== "private") return callback(msg, match);
-
-      const result = await getAuthResult(msg.chat.id, msg.message_id, msg);
-      if (!result.ok) {
-        return sendReRegisterPrompt(bot, msg.chat.id, result.blocked);
-      }
-      return callback(msg, match);
-    });
+    origOnText(regexp, (msg, match) => guardCheck(msg, callback, match));
   };
 
   bot.on = (event, callback) => {
-    // MUHIM: faqat "message" eventini wrap qilamiz
-    // callback_query va boshqa eventlar to'g'ridan-to'g'ri o'tadi
     if (event !== "message") return origOn(event, callback);
-
-    origOn("message", async (msg) => {
-      // Faqat private chat da guard ishlaydi
-      if (msg.chat.type !== "private") return callback(msg);
-
-      // Guruhga qo'shilish xabarlarini o'tkazib yuborish (admin.js uchun)
-      if (msg.new_chat_members) return callback(msg);
-
-      const result = await getAuthResult(msg.chat.id, msg.message_id, msg);
-      if (!result.ok) {
-        return sendReRegisterPrompt(bot, msg.chat.id, result.blocked);
-      }
-      return callback(msg);
-    });
+    origOn("message", (msg) => guardCheck(msg, callback));
   };
 
   return bot;
@@ -115,7 +99,6 @@ async function sendReRegisterPrompt(bot, chatId, isBlocked = false) {
     const text = isBlocked
       ? "🚫 <b>Sizning akkauntingiz bloklangan.</b>\n\nAdmin bilan bog'laning."
       : "⚠️ <b>Siz tizimda ro'yxatdan o'tmagansiz.</b>\n\n/start bosing";
-
     await bot.sendMessage(chatId, text, { parse_mode: "HTML" });
   } catch (err) {
     logger.error("sendReRegisterPrompt xato:", err.message);

@@ -1,7 +1,14 @@
-// config/index.js
-require("dotenv").config({
-  path: `.env.${process.env.NODE_ENV || "development"}`,
-});
+const path = require("path");
+const dotenv = require("dotenv");
+
+// Bot papkasining mutlaq yo'li
+const botDir = __dirname.includes("config")
+  ? path.join(__dirname, "..")
+  : __dirname;
+
+// Avval .env, keyin .env.development — ikkalasini ham yuklash
+dotenv.config({ path: path.join(botDir, ".env") });
+dotenv.config({ path: path.join(botDir, `.env.${process.env.NODE_ENV || "development"}`) });
 
 const config = {
   NODE_ENV: process.env.NODE_ENV || "development",
@@ -41,11 +48,11 @@ const config = {
   },
 
   session: {
-    ttl: 60 * 60 * 2, // 2 soat (sekund)
+    ttl: 60 * 60 * 2,
   },
 
   order: {
-    offerTimeoutMs: 30_000,    // Driver uchun 30 soniya
+    offerTimeoutMs: 30_000,
     maxDriversPerOrder: 10,
   },
 };
@@ -54,7 +61,8 @@ const config = {
 const required = ["BOT_TOKEN", "MONGO_URI"];
 for (const key of required) {
   if (!process.env[key]) {
-    console.error(`❌ Missing required env: ${key}`);
+    console.error("❌ Missing required env: " + key);
+    console.error("📁 .env qidirigan joyi: " + path.join(botDir, ".env"));
     process.exit(1);
   }
 }
