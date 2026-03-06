@@ -1,10 +1,3 @@
-# ── Stage 1: Dependencies ─────────────────────────────────────────────────────
-FROM node:20-alpine AS builder
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci --omit=dev
-
-# ── Stage 2: Production ───────────────────────────────────────────────────────
 FROM node:20-alpine
 WORKDIR /app
 
@@ -13,8 +6,9 @@ ENV NODE_ENV=production
 
 RUN apk add --no-cache tzdata curl
 
-# Dependencies
-COPY --from=builder /app/node_modules ./node_modules
+# Dependencies o'rnatish
+COPY package*.json ./
+RUN npm install --omit=dev --no-audit --no-fund
 
 # Bot kodi
 COPY . .
@@ -26,8 +20,5 @@ RUN addgroup -S botgroup && adduser -S botuser -G botgroup \
  && chown -R botuser:botgroup /app
 USER botuser
 
-# Render.com PORT ni ochish
 EXPOSE 3000
-
-# Webhook rejimida ishlaydi (index.js auto-detect qiladi)
 CMD ["node", "index.js"]
