@@ -59,7 +59,13 @@ async function startWebhook() {
       uptime: Math.floor(process.uptime()) + "s",
     }),
   );
-  app.get("/health", (req, res) => res.json({ status: "ok" }));
+  app.get("/health", (req, res) =>
+    res.json({
+      status: "ok",
+      mode: "webhook",
+      uptime: Math.floor(process.uptime()) + "s",
+    }),
+  );
 
   // Telegram update qabul qilish
   app.post(hookPath, (req, res) => {
@@ -94,7 +100,10 @@ async function startWebhook() {
 
   process.on("SIGTERM", async () => {
     logger.info("SIGTERM — to'xtatilmoqda...");
-    await rawBot.deleteWebHook().catch(() => {});
+    // deleteWebHook() OLIB TASHLANDI — webhook saqlansin
+    process.exit(0);
+  });
+  process.on("SIGINT", async () => {
     process.exit(0);
   });
   process.on("SIGINT", async () => {
