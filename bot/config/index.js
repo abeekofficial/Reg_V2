@@ -1,20 +1,20 @@
+// config/index.js
 const path = require("path");
 const dotenv = require("dotenv");
 
-// Bot papkasining mutlaq yo'li
 const botDir = __dirname.includes("config")
   ? path.join(__dirname, "..")
   : __dirname;
 
-// Avval .env, keyin .env.development — ikkalasini ham yuklash
+// Local .env yuklash (Render da bu fayllar bo'lmaydi — env vars dashboard da)
 dotenv.config({ path: path.join(botDir, ".env") });
-dotenv.config({
-  path: path.join(botDir, `.env.${process.env.NODE_ENV || "development"}`),
-});
+if (process.env.NODE_ENV) {
+  dotenv.config({ path: path.join(botDir, ".env." + process.env.NODE_ENV) });
+}
 
 const config = {
   NODE_ENV: process.env.NODE_ENV || "development",
-  isDev: process.env.NODE_ENV === "development",
+  isDev: process.env.NODE_ENV !== "production",
   isProd: process.env.NODE_ENV === "production",
 
   bot: {
@@ -32,8 +32,7 @@ const config = {
   mongo: {
     uri: process.env.MONGO_URI,
     options: {
-      maxPoolSize: 20,
-      minPoolSize: 5,
+      maxPoolSize: 10,
       socketTimeoutMS: 30000,
       connectTimeoutMS: 10000,
     },
@@ -45,13 +44,10 @@ const config = {
     password: process.env.REDIS_PASSWORD || undefined,
     db: 0,
     keyPrefix: "regbot:",
-    retryDelayOnFailover: 100,
     maxRetriesPerRequest: 3,
   },
 
-  session: {
-    ttl: 60 * 60 * 2,
-  },
+  session: { ttl: 60 * 60 * 2 }, // 2 soat
 
   order: {
     offerTimeoutMs: 30_000,
@@ -59,27 +55,23 @@ const config = {
   },
 
   webhook: {
-    url: process.env.WEBHOOK_URL || "", // https://avataxi.onrender.com
+    url: process.env.WEBHOOK_URL || "",
     port: Number(process.env.PORT) || 3000,
     secret: process.env.WEBHOOK_SECRET || "regbot_secret_2024",
   },
 };
 
 // Majburiy env tekshiruvi
-const required = ["BOT_TOKEN", "MONGO_URI"];
-// Production da WEBHOOK_URL ham kerak
-if (
-  (process.env.NODE_ENV || "development") === "production" &&
-  !process.env.WEBHOOK_URL
-) {
-  console.warn("⚠️  WEBHOOK_URL not set — webhook rejimi ishlamaydi");
+const missing = ["BOT_TOKEN", "MONGO_URI"].filter((k) => !process.env[k]);
+if (missing.length) {
+  console.error("\n❌ MUHIT O'ZGARUVCHILARI TOPILMADI:");
+  missing.forEach((k) => console.error("   • " + k + " = bo'sh!"));
+  console.error("\nRender.com: Dashboard → Environment da qo'shing\n");
+  process.exit(1);
 }
-for (const key of required) {
-  if (!process.env[key]) {
-    console.error("❌ Missing required env: " + key);
-    console.error("📁 .env qidirigan joyi: " + path.join(botDir, ".env"));
-    process.exit(1);
-  }
+
+if (config.isProd && !config.webhook.url) {
+  console.warn("⚠️  WEBHOOK_URL yo'q — polling rejimida ishlaydi");
 }
 
 module.exports = config;

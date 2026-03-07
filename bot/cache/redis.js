@@ -1,5 +1,5 @@
 // cache/redis.js
-const Redis = require("ioredis");
+const Redis  = require("ioredis");
 const config = require("../config");
 const logger = require("../utils/logger");
 
@@ -8,47 +8,53 @@ let client = null;
 function getRedis() {
   if (client) return client;
 
-  // Render.com REDIS_URL (redis://...) yoki alohida host/port
-  const redisUrl = process.env.REDIS_URL;
+  const redisUrl  = process.env.REDIS_URL;
+  const redisHost = process.env.REDIS_HOST;
 
-  const options = redisUrl
-    ? {
-        // Render.com Redis — URL formatida
-        lazyConnect: false,
-        enableReadyCheck: true,
-        keyPrefix: "regbot:",
-        maxRetriesPerRequest: 3,
-        retryStrategy(times) {
-          if (times > 10) {
-            logger.error("Redis: ulanib bo'lmadi");
-            return null;
-          }
-          return Math.min(times * 100, 2000);
-        },
-      }
-    : {
-        // Docker / local — host:port formatida
-        host: config.redis.host,
-        port: config.redis.port,
-        password: config.redis.password || undefined,
-        db: config.redis.db,
-        keyPrefix: config.redis.keyPrefix,
-        maxRetriesPerRequest: config.redis.maxRetriesPerRequest,
-        enableReadyCheck: true,
-        lazyConnect: false,
-        retryStrategy(times) {
-          if (times > 10) {
-            logger.error("Redis: ulanib bo'lmadi");
-            return null;
-          }
-          return Math.min(times * 100, 2000);
-        },
-      };
+  // Redis sozlanmagan bo'lsa — stub qaytarish (in-memory session ishlaydi)
+  if (!redisUrl && !redisHost) {
+    logger.warn("Redis sozlanmagan — in-memory session ishlatiladi");
+    client = {
+      status: "end",
+      get:   async () => null,
+      set:   async () => null,
+      setex: async () => null,
+      del:   async () => null,
+      on:    () => {},
+    };
+    return client;
+  }
 
-  client = redisUrl ? new Redis(redisUrl, options) : new Redis(options);
+  const retryStrategy = (times) => {
+    if (times > 5) {
+      logger.warn("Redis: ulanib bo'lmadi, in-memory ishlatiladi");
+      return null;
+    }
+    return Math.min(times * 500, 3000);
+  };
 
-  client.on("connect", () => logger.info("✅ Redis ulandi"));
-  client.on("error", (err) => logger.error("Redis xato:", err.message));
+  client = redisUrl
+    ? new Redis(redisUrl, {
+        lazyConnect:          false,
+        enableReadyCheck:     true,
+        keyPrefix:            "regbot:",
+        maxRetriesPerRequest: 2,
+        retryStrategy,
+      })
+    : new Redis({
+        host:                 config.redis.host,
+        port:                 config.redis.port,
+        password:             config.redis.password || undefined,
+        db:                   0,
+        keyPrefix:            "regbot:",
+        maxRetriesPerRequest: 2,
+        enableReadyCheck:     true,
+        lazyConnect:          false,
+        retryStrategy,
+      });
+
+  client.on("connect",      () => logger.info("✅ Redis ulandi"));
+  client.on("error",        (err) => logger.warn("Redis: " + err.message));
   client.on("reconnecting", () => logger.warn("Redis qayta ulanmoqda..."));
 
   return client;
