@@ -106,10 +106,6 @@ async function startWebhook() {
   process.on("SIGINT", async () => {
     process.exit(0);
   });
-  process.on("SIGINT", async () => {
-    await rawBot.deleteWebHook().catch(() => {});
-    process.exit(0);
-  });
 }
 
 // ─── POLLING rejimi (local development) ──────────────────────────────────────
