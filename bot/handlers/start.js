@@ -1,5 +1,5 @@
 // handlers/start.js
-const User   = require("../models/User.model");
+const User = require("../models/User.model");
 const config = require("../config");
 const Order = require("../models/Order.model");
 const logger = require("../utils/logger");
@@ -23,18 +23,22 @@ function applyStart(bot) {
 
       // ── ADMIN ─────────────────────────────────────────────────────────────
       if (config.bot.adminIds.includes(chatId)) {
-        return bot.sendMessage(chatId, "👑 <b>ADMIN PANEL</b>\n\nXush kelibsiz!", {
-          parse_mode: "HTML",
-          reply_markup: {
-            keyboard: [
-              ["📊 Admin statistika",  "👥 Foydalanuvchilar"],
-              ["🚗 Haydovchilar",      "📦 Buyurtmalar"],
-              ["📢 Guruhlar",          "📣 Post yuborish"],
-              ["🔧 Tizim",             "🔍 Qidirish"],
-            ],
-            resize_keyboard: true,
+        return bot.sendMessage(
+          chatId,
+          "👑 <b>ADMIN PANEL</b>\n\nXush kelibsiz!",
+          {
+            parse_mode: "HTML",
+            reply_markup: {
+              keyboard: [
+                ["📊 Admin statistika", "👥 Foydalanuvchilar"],
+                ["🚗 Haydovchilar", "📦 Buyurtmalar"],
+                ["📢 Guruhlar", "📣 Post yuborish"],
+                ["🔧 Tizim", "🔍 Qidirish"],
+              ],
+              resize_keyboard: true,
+            },
           },
-        });
+        );
       }
 
       // ── GURUHDAN BUYURTMA QABUL QILISH: /start order_<orderId> ───────────
@@ -323,7 +327,7 @@ async function sendMainMenu(bot, chatId, user) {
           parse_mode: "HTML",
           reply_markup: {
             keyboard: [
-              ["🚖 Buyurtma qabul qilish", "👤 Profilim"],
+              ["🚖 Buyurtma qabul qilishni boshlash", "👤 Profilim"],
               ["📋 Mening buyurtmalarim", "📊 Statistika"],
               ["⭐ Reytingim", "📋 Bot haqida"],
             ],

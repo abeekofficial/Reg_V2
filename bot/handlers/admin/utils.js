@@ -41,10 +41,29 @@ function adminMenu() {
 // ─── User ma'lumot kartasi ───────────────────────────────────────────────────
 function userCard(user, orders = 0) {
   const role = user.role === "driver" ? "🚗 Haydovchi" : "🧍 Yo'lovchi";
-  let t = role + " | <b>" + user.name + "</b>\n";
+
+  const nameLink = user.username
+    ? '<b><a href="https://t.me/' +
+      user.username +
+      '">' +
+      user.name +
+      "</a></b>"
+    : '<b><a href="tg://user?id=' +
+      user.telegramId +
+      '">' +
+      user.name +
+      "</a></b>";
+
+  let t = role + " | " + nameLink + "\n";
   t += "📱 " + user.phone + "\n";
   t += "🆔 <code>" + user.telegramId + "</code>";
-  if (user.username) t += " | @" + user.username;
+  if (user.username)
+    t +=
+      ' | <a href="https://t.me/' +
+      user.username +
+      '">@' +
+      user.username +
+      "</a>";
   t += "\n";
   if (user.role === "driver") {
     t +=

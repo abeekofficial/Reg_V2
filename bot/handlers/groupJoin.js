@@ -15,11 +15,23 @@ function applyGroupJoin(bot) {
 
     const groupId = msg.chat.id;
     const title = msg.chat.title || "Guruh";
+    const username = msg.chat.username || null;
+    const inviteLink = msg.chat.invite_link || null;
+    const addedBy = msg.from.name + " (" + msg.from?.id + ")" || null;
 
     // Guruhni DB ga saqlash
     await Group.findOneAndUpdate(
       { groupId },
-      { groupId, title, isActive: true, addedBy: msg.from?.id },
+      {
+        groupId,
+        title,
+        username,
+        inviteLink,
+        isActive: true,
+        addedBy,
+        lastActivity: new Date(),
+        $setOnInsert: { totalOrders: 0 },
+      },
       { upsert: true, new: true },
     );
 

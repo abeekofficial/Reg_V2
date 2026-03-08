@@ -135,7 +135,7 @@ function applyDriverMenu(bot) {
         parse_mode: "HTML",
         reply_markup: {
           keyboard: [
-            ["🚖 Buyurtma qabul qilishni boshlash"],
+            ["🚖 Buyurtma qabul qilishni boshlash", "📋 Bot haqida"],
             ["📋 Mening buyurtmalarim", "👤 Profilim"],
             ["📊 Statistika", "⭐ Reytingim"],
           ],
